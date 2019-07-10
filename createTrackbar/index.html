@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>create track bar</title>
+    <script src="./utils.js"></script>
+    <script onload="opencvReady()" async src="./opencv.js"></script>
+</head>
+<body>
+  
+    <h2>create track bar</h2>
+    <p id='errMessage'></p>
+    <input value="50" min="0" max="100" step="1" id="trackBar" type="range"/>
+    <label  id="trackWeight"></label>
+    <span id="opencvIsReady">opencv is loading</span>
+    <table>
+        <tr>
+            <td><canvas   id="canvasInput1"></canvas></td>
+            <td><canvas   id="canvasInput2"></canvas></td>
+            <td><canvas   id="canvasOutput1"></canvas></td>
+        </tr>
+        <tr>
+            <td><div>canvas input1</div> </td>
+            <td><div>canvas input2</div> </td>
+            <td><div>canvas output</div> </td>
+        </tr>
+    </table>
+
+    <script>
+   
+
+
+function opencvReady(){
+
+        let utils=new Utils('errMessage')
+
+        let trackBar=document.getElementById('trackBar')
+        let trackWeight=document.getElementById('trackWeight')
+        let opencvIsReady=document.getElementById('opencvIsReady')
+        trackWeight.innerText=trackBar.value
+        opencvIsReady.innerHTML='opencv is Ready'
+     
+   
+        utils.loadImageToCanvas("/img/hello.jpg","canvasInput1")
+        utils.loadImageToCanvas("/img/dog.jpg","canvasInput2")
+
+
+        trackBar.addEventListener('input',(e)=>{
+            // console.log(trackBar.value)
+            trackWeight.innerText=trackBar.value
+            let alpha=(1-trackBar.value/trackBar.max)
+            let beta=1-alpha
+
+            let src1=cv.imread('canvasInput1')
+            let src2=cv.imread('canvasInput2')
+            let dst=new cv.Mat()
+            // 计算公式 src1*alpha+src*beta+gamma  最后一个为深度输出与输入深度相同
+            cv.addWeighted(src1,alpha,src2,beta,0.0,dst,-1)
+            cv.imshow('canvasOutput1',dst)
+
+        
+            dst.delete()
+            src1.delete()
+            src2.delete()
+
+
+        })
+    
+    }
+    </script>
+</body>
+</html>

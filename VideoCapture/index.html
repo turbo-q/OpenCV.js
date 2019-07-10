@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Video capture example</title>
+    <script src="../utils.js"></script>
+    <script async onload="opencvReady()" src="../opencv.js"></script>
+</head>
+
+<body>
+    <h2>Video capture example</h2>
+    <button id="startAndStop" disabled>Start</button>
+    <span id="opencvReady">opencv is loading</span>
+    <p id="errorMessage"></p>
+
+    <table>
+        <tr>
+            <td>
+                <div><video width="400px" height="300px" id="videoInput"></video></div>
+            </td>
+            <td>
+                <div><canvas width="400px" height="300px" id="canvasOutput"></canvas></div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div>videoInput</div>
+            </td>
+            <td>
+                <div>canvasOutput</div>
+            </td>
+        </tr>
+    </table>
+
+    <script>
+
+        let opencvReadyFinish = document.getElementById('opencvReady')
+
+
+        // 加载完成后处理
+        function opencvReady() {
+
+
+            let startAndStop = document.getElementById('startAndStop')
+            let video = document.getElementById('videoInput')
+            let canvasOutput = document.getElementById('canvasOutput')
+            let canvasContext = canvasOutput.getContext('2d')
+            // 创建VideoCapture对象
+            let camera = new cv.VideoCapture(video)
+            // 创建处理错误信息  传入显示错误信息的 标签id
+            let utils = new Utils('errorMessage')
+
+
+            // 定义点击状态
+            let clicked = false
+            //  定义帧率
+            const fps = 30
+            // 移除disabled
+            startAndStop.removeAttribute('disabled')
+            //  显示加载完成
+            opencvReadyFinish.innerHTML = 'opencv is Ready'
+
+            function videoProcess() {
+                // 每次进入过程需重新创建
+                // 创建4通道矩阵 src 为RGBA 4通道  
+                // 由于canvas仅支持具有连续存储的8位RGBA图像，因此cv.Mat类型为cv.CV_8UC4
+                // dst 为灰度图 1通道
+                let src = new cv.Mat(video.height, video.width, cv.CV_8UC4)
+                let dst = new cv.Mat(canvasOutput.height, canvasOutput.width, cv.CV_8UC1)
+
+                function startProcess() {
+
+                    try {
+                        if (!clicked) {
+                            src.delete()
+                            dst.delete()
+                            return
+                        }
+                        let startTime = Date.now()
+                        camera.read(src)
+                        // 网页获取的 图像为RGB 格式的
+                        cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY)
+                        // cv.Canny(dst,dst,50,120)
+                        cv.imshow('canvasOutput', dst)
+                        // 1000/fps   为 ms/帧 减去处理时间 为延迟
+                        // 如果视频是30fps，延迟毫秒应为（1000/30 - processing_time）。
+                        let delay = 1000 / fps - (Date.now() - startTime);
+                        setTimeout(startProcess, delay);
+
+                    }
+                    catch (err) {
+                        utils.printError(err)
+                    }
+
+                }
+                // 处理第一次
+                setTimeout(startProcess, 0)
+            }
+
+
+
+            function onVideoStop() {
+                startAndStop.innerText = 'Start'
+                clicked = false
+                // 清除画布
+                canvasContext.clearRect(0, 0, canvasOutput.width, canvasOutput.height)
+
+            }
+            function onVideoStart() {
+
+                startAndStop.innerText = 'Stop'
+                clicked = true
+                videoProcess()
+            }
+
+            // 点击事件
+            startAndStop.addEventListener('click', () => {
+                if (!clicked) {
+                    utils.clearError()
+                    utils.startCamera('qvga', onVideoStart, 'videoInput')
+
+                }
+                else {
+                    utils.stopCamera()
+                    onVideoStop()
+                }
+            })
+
+
+
+        }
+    </script>
+
+</body>
+
+</html>
