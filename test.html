@@ -8,6 +8,12 @@
     <title>Document</title>
     <script src="./opencv.js" onload="opencvReady()" async></script>
     <script src="./utils.js"></script>
+    <style>
+    body{
+        background-color: #333;
+        color: white
+    }
+    </style>
 </head>
 
 <body>
@@ -18,7 +24,10 @@
     <table>
         <tr>
             <td>
-                <div><video width="300px" height="200px" id="videoInput"></video></div>
+                <div><img id="canvasInput1" src="./hello.jpg" alt=""></div></canvas></div>
+            </td>
+            <td>
+                <div><canvas width="300px" height="200px" id="canvasInput2"></canvas></div>
             </td>
             <td>
                 <div><canvas width="300px" height="200px" id="canvasOutput"></canvas></div>
@@ -26,7 +35,10 @@
         </tr>
         <tr>
             <td>
-                <div>video input</div>
+                <div>canvas input1</div>
+            </td>
+            <td>
+                <div>canvas input2</div>
             </td>
             <td>
                 <div>canvas output</div>
@@ -38,88 +50,23 @@
     <script>
 
         function opencvReady() {
+            let utils = new Utils('errMessage')
 
-            // 用于获取错误信息
-            let utils = new Utils('errorMessage')
-            let videoInput = document.getElementById('videoInput')
-            let canvasOutput = document.getElementById('canvasOutput')
-            let ctx = canvasOutput.getContext('2d')
-            let startAndStop = document.getElementById('startAndStop')
-            let opencvOnload = document.getElementById('opencvOnload')
+            // utils.loadImageToCanvas("/dog.jpg", "canvasInput2")
+            // utils.loadImageToCanvas("/hello.jpg", "canvasInput1")
 
-            opencvOnload.innerHTML = 'opencv is ready'
-            startAndStop.removeAttribute('disabled')
-            // 定义点击状态
-            var clicked = false
-            const fps = 30
-
-
-            let camera = new cv.VideoCapture(videoInput)
-
-
-
-
-            function videoProcess() {
-
-                let src = new cv.Mat(videoInput.height, videoInput.width, cv.CV_8UC4)
-                let dst = new cv.Mat(canvasOutput.height, canvasOutput.width, cv.CV_8UC1)
-
-                function canvasDis() {
-                    try {
-                        if (!clicked) {
-                            src.delete()
-                            dst.delete()
-                            return
-                        }
-                        let startTime = Date.now()
-                        camera.read(src)
-                        cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY)
-                        cv.imshow('canvasOutput', dst)
-                        let delay = 1000 / startTime - (Date.now() - startTime)
-                        setTimeout(canvasDis, delay)
-
-                    }
-                    catch (err) {
-                        utils.printError(err)
-                    }
-                }
-                setTimeout(canvasDis, 0)
-
-
-
-            }
-
-            function onVideoStart() {
-                clicked = true
-                startAndStop.innerText = 'stop'
-                videoProcess()
-
-            }
-
-            function onVideoStop() {
-                clicked = false
-                startAndStop.innerText = 'start'
-                // 清除画布
-                ctx.clearRect(0, 0, canvasOutput.width, canvasOutput.height)
-
-            }
-
-
-            startAndStop.onclick = function () {
-                // 没有点击
-                if (!clicked) {
-                    // 清除错误
-                    utils.clearError()
-                    // 开始视频
-                    utils.startCamera('qvga', onVideoStart, 'videoInput')
-                }
-                else {
-                    // 停止视频
-                    utils.stopCamera()
-                    onVideoStop()
-                }
-
-            }
+            let src=cv.imread('canvasInput1')
+          
+            
+            let dst = new cv.Mat()
+            cv.Canny(src, dst, 50,100);
+       
+            cv.imshow('canvasOutput', dst)
+            
+            src.delete()
+            dst.delete()
+            
+     
 
 
 
